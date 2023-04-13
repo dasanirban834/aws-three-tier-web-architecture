@@ -1,0 +1,5 @@
+---
+- name: Set hostname
+  command: hostnamectl set-hostname {{ item }}
+  with_items: 
+    - "{{ hostnames }}"

@@ -1,0 +1,14 @@
+---
+- name: 1. Providing sudo access to listed users
+  template:
+    src: ../template/sudo_template.j2
+    dest: '/etc/sudoers.d/11-{{ item.name }}'
+    owner: root
+    group: root
+    mode: '0440'
+  with_items: 
+    - "{{ users }}"
+  register: sudo
+
+- debug:
+    msg: "{{ sudo }}"

@@ -1,0 +1,23 @@
+#Description:
+#The rsyslog software is a recommended replacement to the original syslogd daemon.
+#rsyslog provides improvements over syslogd, including:
+#      connection-oriented (i.e. TCP) transmission of logs
+#      The option to log to database formats
+#      Encryption of log data en route to a central logging server
+---
+- name: Verify rsyslog is installed or not
+  command: rpm -q rsyslog
+  ignore_errors: true
+  register: rsyslog
+
+- name: Install rsyslog package if not installed
+  yum: 
+    name: rsyslog
+    state: present
+  when: "rsyslog.stdout == 'package rsyslog is not installed'"
+
+- name: Enable and start the service
+  command: "{{ item }}"
+  with_items: 
+    - systemctl enable rsyslog
+    - systemctl start rsyslog

@@ -1,0 +1,32 @@
+---
+
+- name: fetch disk names
+  set_fact:
+    disk_names: "{{ item.name }}"
+  with_items: "{{ disk }}"
+
+- name: Playbook for creating partition
+  parted:
+    align: "{{ item.1.align | default(omit) }}"
+    device: "{{ item.0.name }}"
+    number: "{{ item.1.id }}"
+    flags: "{{ item.1.flags | default(omit) }}"
+    label: "{{ item.1.label | default(omit) }}"
+    fs_type: "{{ item.1.fs_type | default(omit) }}"
+    resize: "{{ item.1.resize | default(omit) }}"
+    name: "{{ item.1.name | default(omit) }}"
+    part_type: "{{ item.1.part_type | default(omit) }}"
+    state: "{{ item.1.state | default('present') }}"
+    part_start: "{{ item.1.part_start }}"
+    part_end: "{{ item.1.part_end }}"
+    unit: "{{ item.1.unit | default(omit) }}"
+  with_subelements:
+    - "{{ disk }}"
+    - partition
+
+- name: Get partition details
+  debug:
+    msg: "{{ item.0.name }}{{ item.1.id }}"
+  with_subelements:
+    - "{{ disk }}"
+    - partition

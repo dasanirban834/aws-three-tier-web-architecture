@@ -1,0 +1,9 @@
+---
+- name: Setting all users and their UIDs
+  users:
+    - {name: ansible, uid: 1001}
+
+
+- hostnames:
+    - App1
+    - App2

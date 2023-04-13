@@ -1,0 +1,9 @@
+---
+- name: Install lvm2 dependency
+  package:
+    name: "{{ package_name }}"
+    state: present
+  register: install_output
+
+- debug:
+    msg: "{{ install_output | to_json }}"

@@ -1,0 +1,42 @@
+---
+
+- name: Play 1 | Install MySQL
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - yum:
+        name: mysql
+        state: present
+      register: mysql
+
+    - debug:
+        msg: "{{ mysql }}"
+
+- name: Play 2 | Set Hostname and ceate users and provide sudo access
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../variable/vars.yml
+    - ../variable/vault.yml
+  roles:
+    - ../roles/useradd
+    - ../roles/sudo
+    - ../roles/hostnamectl
+
+- name: Play 3 | Perform OS Hardening actions
+  hosts: all
+  gather_facts: false
+  become: true
+  roles:
+    - ../roles/ssh
+    - ../roles/login_banner
+    - ../roles/services
+    - ../roles/timezone
+    - ../roles/fs_integrity
+    - ../roles/log_management
+    - ../roles/rsyslog
+    - ../roles/cron
+    - ../roles/journald
+

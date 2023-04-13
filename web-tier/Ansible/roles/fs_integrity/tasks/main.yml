@@ -1,0 +1,75 @@
+# Description:
+# AIDE takes a snapshot of filesystem state including modification times, permissions, and
+# file hashes which can then be used to compare against the current state of the filesystem to
+# detect modifications to the system
+
+---
+- name: Ensure AIDE is installed
+  command: rpm -q aide
+  ignore_errors: true
+  register: aide
+
+- debug:
+    msg: "{{ aide.stdout }}"
+
+- name: Install aide package if not
+  yum:
+    name: aide
+    state: present
+  register: aide_output
+  when: "aide.stdout == 'package aide is not installed'"
+
+- debug:
+    msg: "{{ aide_output }}"
+
+- name: Initialize AIDE
+  shell: "{{ item }}"
+  register: aide_init
+  with_items:
+    - aide --init
+    - mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+
+- debug:
+    msg: "{{ aide_init }}"
+
+# Description:
+# Periodic checking of the filesystem integrity is needed to detect changes to the filesystem.
+
+- name: Check aide service status
+  shell: "{{ item }}"
+  register: aide_status
+  ignore_errors: true
+  when: aide_status.stdout == ""
+  with_items: 
+    - systemctl is-enabled aidecheck.service
+    - systemctl is-enabled aidecheck.timer
+    - systemctl status aidecheck.timer
+
+- debug:
+    msg: "{{ aide_status }}"
+
+- name: create aidecheck.service and aidecheck.timer file at /etc/systemd/system/ path
+  file:
+    path: "{{ item }}"
+    state: touch
+  with_items:
+    - aidecheck.service
+    - aidecheck.timer
+
+- name: Run aide check periodically
+  template:
+    src: "{{ item.src }}"
+    dest:  "{{ item.dest }}"
+  with_items: 
+    - { src: aidecheck.service.j2, dest: /etc/systemd/system/aidecheck.service }
+    - { src: aidecheck.timer.j2, dest: /etc/systemd/system/aidecheck.timer }
+
+- name: Post configuration checkings
+  shell: "{{ item }}"
+  register: final_status
+  with_items:
+    - chown root:root /etc/systemd/system/aidecheck.*
+    - chmod 0644 /etc/systemd/system/aidecheck.*
+    - systemctl daemon-reload
+    - systemctl enable aidecheck.service
+    - systemctl --now enable aidecheck.timer

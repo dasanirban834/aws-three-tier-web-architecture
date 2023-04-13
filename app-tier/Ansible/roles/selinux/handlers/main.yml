@@ -1,0 +1,7 @@
+---
+- name: Reboot
+  reboot:
+  when: 
+    - selinux_reboot
+- name: Gather facts
+  setup:

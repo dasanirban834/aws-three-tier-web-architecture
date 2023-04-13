@@ -1,0 +1,27 @@
+############ Time Synchronization using chrony package ############
+
+---
+- name: Ensure chrony package is installed
+  yum:
+    name: chrony
+    state: latest
+    update_cache: yes
+
+- name: Deploy chrony.conf template
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart the chronyd service
+  service:
+    name: chronyd
+    state: restarted
+
+- name: Verification of Time synchronization
+  command: "{{ item }}"
+  with_items:
+    - chronyc sources -v
+    - chronyc tracking

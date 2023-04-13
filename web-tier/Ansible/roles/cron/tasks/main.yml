@@ -1,0 +1,34 @@
+---
+- name: Ensure cron daemon is enabled and running
+  command: "{{ item }}"
+  with_items: 
+    - systemctl enable crond
+    - systemctl start crond
+
+- name:  Ensure permissions on /etc/crontab are configured
+  file:
+    path: /etc/crontab
+    owner: root
+    group: root
+    mode: 0600
+
+- name:  Ensure permissions on /etc/cron.* are configured
+  file:
+    path: /etc/cron.{{ item }}
+    owner: root
+    group: root
+    mode: 0700
+  with_items: 
+    - hourly
+    - daily
+    - weekly
+    - monthly
+    - d
+
+- name: Ensure cron is restricted to authorized users
+  file:
+    path: /etc/cron.allow
+    owner: root
+    group: root
+    mode: 0600
+    state: touch

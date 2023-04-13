@@ -1,0 +1,18 @@
+---
+- name: Create Partition
+  import_tasks: 1_partition.yml
+
+- name: Install lvm2 dependency
+  import_tasks: 2_install_lvm2.yml
+
+- name: Create volume group
+  import_tasks: 3_lvm_vg.yml
+
+- name: Create logical volume
+  import_tasks: 4_lvm_lvol.yml
+
+- name: Make a filesystem
+  import_tasks: 5_filesystem.yml
+
+- name: Mount the filesystems
+  import_tasks: 6_mount.yml

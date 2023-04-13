@@ -1,0 +1,43 @@
+#Description:
+#firewalld is a firewall management tool for Linux operating systems. It provides firewall
+#features by acting as a front-end for the Linux kernel's netfilter framework via the iptables
+#backend or provides firewall features by acting as a front-end for the Linux kernel's
+#netfilter framework via the nftables utility
+
+---
+- name: Verify Firewalld package installed or not
+  command: rpm -q firewalld
+  ignore_errors: true
+  register: firewalld
+
+- debug:
+    msg: "{{ firewalld }}"
+
+- name: Install firewalld packaged if not installed
+  yum:
+    name: firewalld
+    state: present
+  when: "firewalld.stdout == 'package firewalld is not installed'"
+
+####### Uninstall iptables-service #######
+
+- name: Verify if iptables-servcices installed
+  command: rpm -q iptables-services
+  ignore_errors: true
+  register: iptables
+
+- debug:
+    msg: "{{ iptables }}"
+
+- name: Uninstall iptables-services package if present
+  yum:
+    name: iptables-services
+    state: absent
+  when: "iptables.stdout != 'package iptables-services is not installed'"
+
+###### Ensure firewalld service is disabled ######
+
+- name: Enable firewalld service
+  service:
+    name: firewalld
+    state: stopped

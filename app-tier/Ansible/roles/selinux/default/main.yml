@@ -1,0 +1,10 @@
+---
+# default file for selinux
+selinux_state: enforcing
+selinux_policy: targeted
+selinux_reboot: yes
+selinux_boolean:
+  - name:  http_can_network_connect
+  - name: abrt_anon_write
+    state: false
+    persistant: false

@@ -1,0 +1,24 @@
+---
+- name: Ensure message of the day is configured properly
+  template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: 0644
+  register: motd_output
+
+- name: print the output
+  debug:
+    msg: "{{ motd_output }}"
+
+- name: Set login banner
+  copy:
+    dest: "{{ item }}"
+    src: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
+  with_items: 
+    - /etc/issue
+    - /etc/issue.net

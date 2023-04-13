@@ -1,0 +1,140 @@
+---
+- name: Import chrony.yml | Ensure to synchronize time
+  import_tasks: chrony.yml
+  ignore_errors: true
+
+############ Ensure X11 is not installed #############
+# Description:
+# The X Window System provides a Graphical User Interface (GUI) where users can have
+# multiple windows in which to run programs and various add on. The X Windows system is
+# typically used on workstations where users login, but not on servers where users typically
+# do not login
+
+- name: Ensure X11 and related components are not installed
+  yum:
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: true
+  register: x11_output
+  loop:
+    - x11-common
+    - xorg-x11-server-Xorg
+    - xorg-x11-xinit
+
+- debug:
+    msg: "{{ x11_output | json_query('results[*].results') }}"
+
+########### Ensure Avahi service is installed ##############
+
+# Description:
+# Avahi is a free zeroconf implementation, including a system for multicast DNS/DNS-SD
+# service discovery. Avahi allows programs to publish and discover services and hosts
+# running on a local network with no specific configuration. For example, a user can plug a
+# computer into a network and Avahi automatically finds printers to print to, files to look at
+# and people to talk to, as well as network services running on the machine.
+
+- name: Ensure Avahi server is not installed
+  command:  rpm -q avahi-autoipd avahi
+  ignore_errors: true
+  register: avahi
+
+- debug:
+    msg: "{{ avahi.stdout }}"
+
+# Description:
+# The Lightweight Directory Access Protocol (LDAP) was introduced as a replacement for
+# NIS/YP. It is a service that provides a method for looking up information from a central
+# database
+
+- name:  Ensure LDAP server is not installed
+  command: rpm -q openldap-servers
+  ignore_errors: true
+  register: ldap
+
+- debug:
+    msg: "{{ ldap.stdout }}"
+
+- name: Uninstall ldap package if it's present
+  yum:
+    name: openldap-servers
+    state: absent
+  when: "ldap.stdout != 'package openldap-servers is not installed'"
+
+# Description:
+# The Samba daemon allows system administrators to configure their Linux systems to share
+# file systems and directories with Windows desktops. Samba will advertise the file systems
+# and directories via the Server Message Block (SMB) protocol. Windows desktop users will
+# be able to mount these directories and file systems as letter drives on their systems.
+
+- name: Ensure Samba is not installed
+  command: rpm -q samba
+  ignore_errors: true
+  register: samba
+
+- debug:
+    msg: "{{ samba.stdout }}"
+
+- name: Uninstall samba package if it's present
+  yum:
+    name: samba
+    state: absent
+  when: "samba.stdout != 'package samba is not installed'"
+
+# Description:
+# The Network File System (NFS) is one of the first and most widely distributed file systems
+# in the UNIX environment. It provides the ability for systems to mount file systems of other
+# servers through the network.
+
+- name: Ensure nfs-utils is not installed or the nfs-server service is masked
+  command: rpm -q nfs-utils
+  ignore_errors: true
+  register: nfs_utils
+
+- debug:
+    msg: "{{ nfs_utils }}"
+
+- name: Uninstall the nfs-utils package if it's present
+  yum:
+    name: nfs-utils
+    state: absent
+  when: "nfs_utils.stdout != 'package nfs-utils is not installed'"
+
+# Description:
+# The rsyncd service can be used to synchronize files between systems over network links.
+- name: Ensure rsync is not installed or the rsyncd service is masked
+  command: rpm -q rsync
+  ignore_errors: true
+  register: rsync
+
+- debug:
+    msg: "{{ rsync }}"
+
+- name: Uninstall the rsync package if present
+  yum:
+    name: rsync
+    state: absent
+  when: "rsync.stdout != 'package rsync is not installed'"
+
+### Uninstall few client services to protect the servers ###
+- name: Verify below client server packages are installed or not
+  command: rpm -q "{{ item }}"
+  ignore_errors: true
+  with_items: 
+    - ypbind
+    - rsh
+    - talk
+    - openldap-clients
+  register: client_packages
+
+- debug:
+    msg: "{{ client_packages }}"
+
+- name: Uninstall the below packages if installed already
+  yum:
+    name: "{{ item }}"
+    state: absent
+  with_items: 
+    - ypbind
+    - rsh
+    - talk
+    - openldap-clients

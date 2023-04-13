@@ -1,0 +1,9 @@
+---
+
+- name: Make a filesystem
+  filesystem:
+    dev: "/dev/{{ item.0.vg }}/{{ item.1.name }}"
+    fstype: "{{ fs.name | default('ext4') }}"
+  with_subelements:
+    - "{{ lvol }}"
+    - lv

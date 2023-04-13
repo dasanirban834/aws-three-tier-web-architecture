@@ -1,0 +1,10 @@
+---
+- name: 1.Get the details of user to find out whether that user exists or not
+  getent:
+    database: passwd
+    key: "{{ item.name }}"
+    fail_key: yes
+    split: ':'
+  with_items:
+    - "{{ users }}"
+  register: user_status_output

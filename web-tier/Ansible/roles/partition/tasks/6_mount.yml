@@ -1,0 +1,29 @@
+---
+
+- name: Create a directory
+  file:
+    path: "{{ folder.path }}/{{ item }}"
+    state: directory
+    mode: "{{ folder.mode }}"
+  with_items:
+    - "{{ folder.name }}"
+
+- name: UUID
+  shell: blkid /dev/{{ item.0.vg }}/{{ item.1.name }} -s UUID -o value
+  register: list_uuid
+  with_subelements:
+    - "{{ lvol }}"
+    - lv
+- debug:
+    msg: "{{ list_uuid | json_query('results[*].stdout') | flatten }}"
+  register: UUID
+
+- name: Mount the filesystems
+  mount:
+    path: "{{ folder.path }}/{{ item.1 }}"          # mountpoint
+    src: "UUID={{ item.0 }}"                       # device/volume name
+    fstype: "{{ fs.name }}"
+    state: mounted
+  with_together:
+    - "{{ UUID.msg }}"
+    - "{{ folder.name }}"

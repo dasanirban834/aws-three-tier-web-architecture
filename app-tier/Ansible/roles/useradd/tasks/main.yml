@@ -1,0 +1,7 @@
+---
+- name: Check users existance
+  import_tasks: usercheck.yml
+  ignore_errors: true
+
+- name: Create users
+  import_tasks: usercreate.yml

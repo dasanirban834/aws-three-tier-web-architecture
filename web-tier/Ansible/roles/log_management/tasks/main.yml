@@ -1,0 +1,88 @@
+#Description:
+#auditd is the userspace component to the Linux Auditing System. It's responsible for
+#writing audit records to the disk
+---
+- name: Ensure auditd is installed
+  command: rpm -q "{{ item }}"
+  ignore_errors: true
+  with_items: 
+    - audit
+    - audit-libs
+  register: auditd
+
+- debug:
+    msg: "{{ auditd }}"
+
+- name: Install listed packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: 
+    - audit
+    - audit-libs
+  register: install_audit
+
+- debug:
+    msg: "{{ install_audit }}"
+
+- name: Enable and Start the service
+  command: "{{ item }}"
+  with_items: 
+    - systemctl enable auditd
+    - systemctl start auditd
+
+- name: Ensure audit log storage size is configured
+  lineinfile:
+    path: /etc/audit/auditd.conf
+    regexp: ^max_log_file
+    line: max_log_file = 20
+  register: logsize
+
+- debug:
+    msg: "{{ logsize }}"
+
+- name:  Ensure audit logs are not automatically deleted
+  lineinfile:
+    path: /etc/audit/auditd.conf
+    regexp: ^max_log_file_action
+    line: max_log_file_action = ROTATE
+
+- name:  Ensure events that modify user/group information are collected
+  template:
+    src: ../template/audit-group.rules.j2
+    dest: /etc/audit/rules.d/audit-group.rules
+    owner: root
+    group: root
+    mode: 600
+
+- name: Ensure login and logout events are collected
+  template:
+    src: ../template/audit-login.rules.j2
+    dest: /etc/audit/rules.d/audit-login.rules
+    owner: root
+    group: root
+    mode: 600
+
+- name: Ensure session initiation information is collected
+  template:
+    src: ../template/audit-session.rules.j2
+    dest: /etc/audit/rules.d/audit-session.rules
+    owner: root
+    group: root
+    mode: 600
+
+- name:  Ensure file deletion events by users are collected
+  template:
+    src: ../template/audit-deletion.rules.j2
+    dest: /etc/audit/rules.d/audit-deletion.rules
+    owner: root
+    group: root
+    mode: 600
+
+- name: Ensure changes to system administration scope (sudoers) is collected
+  template:
+    src: ../template/audit-sudoers.rules.j2
+    dest: /etc/audit/rules.d/audit-sudoers.rules
+    owner: root
+    group: root
+    mode: 600

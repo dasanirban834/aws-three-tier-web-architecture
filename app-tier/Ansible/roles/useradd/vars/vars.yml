@@ -1,0 +1,8 @@
+---
+- name: Setting all users and their UIDs
+  users:
+    - { name: ayush, uid: 1050 }
+    - { name: ayan, uid: 1051 }
+    - { name: ec2-user, uid: 1000 }
+    - { name: ansible, uid: 1001 }
+    - { name: prem, uid: 1200 }

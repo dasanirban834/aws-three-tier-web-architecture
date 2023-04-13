@@ -1,0 +1,66 @@
+---
+- name: Play 1 | Clone GitHub repo for application
+  hosts: all
+  become_user: ansible
+  gather_facts: true
+  tasks:
+    - name: Task 1 | Clone Git repository
+      shell: "{{ item }}"
+      with_items:
+        - git clone https://github.com/aws-samples/aws-three-tier-web-architecture-workshop.git
+        - cp -r /home/ansible/aws-three-tier-web-architecture-workshop/application-code/app-tier /home/ansible/
+
+
+
+- name: Play 2 | Create Database credentials
+  hosts: all
+  become_user: ansible
+  gather_facts: true
+  vars_files:
+    - ./vars.yml
+  tasks:
+    - name: Task 1 | Create sql credentials file
+      shell: |
+          cat << EOF > /home/ansible/.my.cnf
+          [client]
+          user={{DB_USER}}
+          password={{DB_PASSWORD}}
+          EOF
+    - name: Task 2 | Set the permissions of sql credential file
+      shell: chmod 600 /home/ansible/.my.cnf
+
+
+
+
+- name: Play 3 | Install NVM Packages
+  hosts: all
+  gather_facts: true
+  become_user: ansible
+  vars_files:
+    - ./vars.yml
+  tasks:
+    - name: Task 1 | Delete exisitng DbConfig.js file from app-tier directory
+      shell: rm -f /home/ansible/app-tier/DbConfig.js
+
+    - name: Task 2 | Edit DbConfig.js file with credentials
+      template:
+        src: ./DbConfig.js
+        dest: /home/ansible/app-tier/DbConfig.js
+        owner: ansible
+        group: ansible
+        mode: 755
+
+    - name: Task 3 | Copy deployment.sh file to /home/ansible location
+      copy:
+        src: ./deployment.sh
+        dest: /home/ansible
+        owner: ansible
+        group: ansible
+        mode: 755
+
+    - name: Task 4 | Set permission of deployment.sh file
+      shell: chmod 755 /home/ansible/deployment.sh
+
+    - name: Task 5 | Execute deployment.sh file
+      shell: sudo sh /home/ansible/deployment.sh
+

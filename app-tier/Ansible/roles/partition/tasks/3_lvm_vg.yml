@@ -1,0 +1,29 @@
+---
+
+- name: Collect all the partitions to create volume group
+  set_fact:
+    part: "{{ item.0.name }}{{ item.1.id }}"
+  with_subelements:
+    - "{{ disk }}"
+    - partition
+  register: part
+
+- debug:
+    msg: "{{ part | json_query('results[*].ansible_facts.part') | join(',') }}"
+  register: pv_output
+
+- name: Set up VG
+  lvg:
+    force: "{{ item.force | default(omit) }}"
+    pesize: "{{ item.pesize | default(omit) }}"
+    pv_options: "{{ item.pv_options | default(omit) }}"
+    pvresize: "{{ item.pvresize | default(omit) }}"
+    pvs: "{{ pv_output.msg }}"
+    state: "{{ item.state | default('present') }}"
+    vg: "{{ item.name }}"
+    vg_options: "{{ item.vg_options | default(omit) }}"
+  with_items: "{{ vg_details }}"
+  register: vg_output
+
+- debug:
+    msg: "{{ vg_output }}"

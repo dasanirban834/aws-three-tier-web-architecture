@@ -1,0 +1,14 @@
+---
+- name: Enable sshd_config file
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.string }}"
+    line: "{{ item.line }}"
+  with_items: 
+    - {string: ^#PermitRootLogin, line: PermitRootLogin yes}
+    - {string: ^#PasswordAuthentication, line: PasswordAuthentication yes}
+    - {string: ^PasswordAuthentication, line: '#PasswordAuthentication no'}
+  register: sshd_config
+
+- debug:
+    msg: "{{ sshd_config }}"

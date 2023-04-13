@@ -1,0 +1,28 @@
+---
+- name: Import assert.yml file
+  import_tasks: assert.yml
+  run_once: true
+
+- name: Install prerequisites packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ selinux_prerequisites.amazon2 }}"
+
+- name: Configure selinux
+  block:
+    - name: manage selinux
+      selinux:
+        state: "{{ selinux_state }}"
+        policy: "{{ selinux_policy }}"
+      notify:
+        - Reboot
+    - name: manage selinux booleans
+      seboolean:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+        persistant: "{{ item.persistant }}"
+      loop: "{{ selinux_boolean }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: selinux_boolean is defined

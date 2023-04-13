@@ -1,0 +1,8 @@
+---
+selinux_prerequisites:
+  default: []
+  amazon2:
+    - libselinux-python
+    - libsemanage-python
+    - policycoreutils-python
+    - selinux-policy

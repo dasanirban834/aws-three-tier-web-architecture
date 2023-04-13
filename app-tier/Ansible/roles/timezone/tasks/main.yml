@@ -1,0 +1,6 @@
+--- 
+- name: Set the timezone
+  shell: sudo timedatectl set-timezone Asia/Kolkata
+  register: timezone
+- debug:
+    msg: "{{ timezone }}"

@@ -1,0 +1,25 @@
+---
+
+- name: Ensure logical volume exists
+  command: lvdisplay -v /dev/{{ item.vg }}/{{ item.lv }}
+  loop: "{{ lvol }}"
+  ignore_errors: true
+  register: lv_check
+
+- name: Create LVM logical volumes
+  lvol:
+    active: "{{ item.0.active | default(omit) }}"
+    force: "{{ item.0.force | default(omit) }}"
+    lv: "{{ item.1.name }}"
+    opts: "{{ item.0.opts | default(omit) }}"
+    pvs: "{{ item.0.pvs | default(omit) }}"
+    resizefs: "{{ item.0.resizefs | default(omit) }}"
+    shrink: "{{ item.0.shrink }}"
+    size: "{{ item.1.size }}"
+    snapshot: "{{ item.0.snapshot | default(omit) }}"
+    state: "{{ item.0.state | default('present') }}"
+    thinpool: "{{ item.0.thinpool | default(omit) }}"
+    vg: "{{ item.0.vg }}"
+  with_subelements:
+    - "{{ lvol }}"
+    - lv

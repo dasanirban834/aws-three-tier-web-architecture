@@ -1,0 +1,52 @@
+---
+- name: Ensure selinux_state is defined correctly
+  assert:
+    that:
+      - selinux_state is defined
+      - selinux_state is string
+      - selinux_state is in ["disabled", "enforcing", "permissive"]
+    quiet: true
+
+- name: Ensure selinux_policy is defined correctly
+  assert:
+    that:
+      - selinux_policy is defined
+      - selinux_policy is string
+      - selinux_policy is in ["default", "minimum", "mis", "targeted"]
+    quiet: true
+
+- name: Ensure selinux_reboot is defined correctly
+  assert:
+    that:
+      - selinux_reboot is defined
+      - selinux_reboot is boolean
+    quiet: true
+
+- name: Ensure selinux_boolean is defined correctly
+  assert:
+    that:
+      - selinux_boolean is iterable
+    quiet: true
+  when: selinux_boolean is defined
+
+- name: Ensure item.name in selinux_boolean is set correctly
+  assert:
+    that:
+      - item.name is defined
+      - item.name is string
+    quiet: true
+  loop: "{{ selinux_boolean }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Ensure item.name in selinux_boolean is set correctly
+  assert:
+    that:
+      - item.persistant is boolean
+    quiet: true
+  loop: "{{ selinux_boolean }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - selinux_boolean is defined
+    - item.persistant is defined

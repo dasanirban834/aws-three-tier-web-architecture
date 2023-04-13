@@ -1,0 +1,15 @@
+---
+- name: 2.Create Users who doesn't exist
+  user:
+    name: "{{ item.item.name }}"
+    create_home: yes
+    home: /home/{{ item.item.name }}
+    shell: /bin/bash
+    password: "{{ password | password_hash('sha256') }}"
+    uid: "{{ item.item.uid }}"
+    state: present
+  when: "{{ item.failed == true }}"
+  with_flattened: "{{ user_status_output.results }}"
+  register: user_create_output
+- debug:
+    msg: "{{ user_create_output.results | to_json }}"
