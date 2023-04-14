@@ -1,0 +1,76 @@
+---
+- name: Play 1 | Clone GitHub repo for application
+  hosts: all
+  become_user: ansible
+  gather_facts: true
+  tasks:
+    - name: Task 1 | Clone Git repository
+      shell: "{{ item }}"
+      with_items:
+        - git clone https://github.com/aws-samples/aws-three-tier-web-architecture-workshop.git
+        - cp -r /home/ansible/aws-three-tier-web-architecture-workshop/application-code/web-tier /home/ansible/
+
+- name: Play 2 | Web Server Configurations
+  hosts: all
+  become_user: ansible
+  ignore_errors: true
+  gather_facts: true
+  vars_files:
+    - ./vars.yml
+  tasks:
+    - name: Task 1 | Copy deployment.sh file to /home/ansible in remote machine
+      copy:
+        src: "{{ item }}"
+        dest: /home/ansible
+        owner: ansible
+        group: ansible
+        mode: 755
+      with_items:
+        - ./deployment.sh
+
+    - name: Task 2 | Execute NVM build commands
+      shell: "{{ item }}"
+      with_items:
+        - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+        - source ~/.bashrc
+        - nvm install 16
+        - nvm use 16
+    - command: "{{ item }}"
+      with_items:
+        - cd web-tier
+        - npm install
+        - npm audit fix --force 
+        - npm run build
+
+
+    - name: Task 3 | Install nginx
+      shell: sudo amazon-linux-extras install nginx1 -y
+
+    - name: Task 4 | Copy nginx.conf template in /home/ansible location
+      template:
+        src: ./nginx.conf
+        dest: /home/ansible/
+        owner: root
+        group: root
+        mode: 755
+
+    - name: Task 5 | Take a backup of nginx.conf file and place actual conf file in /etc directory
+      shell: sudo cp -r /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bkp
+
+
+    - name: Delete nginx.conf from /etc/nginx location
+      command: sudo rm -f /etc/nginx/nginx.conf
+
+    - name: Task 6 | Copy nginx.conf file from /home/ansible to /etc/nginx
+      shell: sudo cp -r /home/ansible/nginx.conf /etc/nginx/
+
+    - name: Task 7 | Set the permission of /home/ansible
+      shell: chmod -R 755 /home/ansible
+
+    - name: Task 7 | Restart nginx service
+      service:
+        name: nginx
+        state: restarted
+
+    - name: Task 8 |  Check conf of nginx
+      shell: sudo chkconfig nginx on
