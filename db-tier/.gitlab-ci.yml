@@ -1,0 +1,28 @@
+default:
+    tags:
+     - gitlab-runner-test
+
+# ### Defining Pipeline stages ###
+stages:
+    - Create Workspace
+    - Cleanup
+
+Create Workspace:
+    stage: Create Workspace
+    script:
+        - sudo chmod +x Scripts/1_Env.sh
+        - source Scripts/1_Env.sh
+        - python3 Scripts/2_CreateTFCWorkspace.py
+        - sleep 3s
+    artifacts:
+        paths:
+            - content.tar.gz
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+Cleanup:
+    stage: Cleanup
+    script:
+        - sudo chmod +x Scripts/7_Cleanup.sh
+        - source Scripts/7_Cleanup.sh
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
