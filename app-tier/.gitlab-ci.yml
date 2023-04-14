@@ -1,0 +1,58 @@
+default:
+    tags:
+     - gitlab-runner-test
+
+# ### Defining Pipeline stages ###
+stages:
+    # - Terraform Build
+    - OS Provisioning
+    - Application Provisioning
+    - Cleanup
+
+ Terraform Build:
+     stage: Terraform Build
+     script:
+         - sudo chmod +x BuildScript/1_Env.sh
+         - source BuildScript/1_Env.sh
+         - python3 BuildScript/2_CreateTFCWorkspace.py -vvv
+         - sleep 70s
+         - python3 BuildScript/validate_ec2_ready.py -vvv
+         - sleep 3s
+     artifacts:
+         paths:
+             - content.tar.gz
+     rules:
+         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+OS Provisioning:
+    stage: OS Provisioning
+    script:
+        - sudo chmod +x BuildScript/inventory.sh
+        - source BuildScript/inventory.sh
+        - ansible-playbook -i Ansible/inventory/hosts Ansible/playbook/main.yml --vault-password-file /home/gitlab-runner/creds/.vault_pass -vvv
+    when: manual
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    artifacts:
+        paths:
+          - ./Ansible/inventory/hosts
+          - ./AppScript/deployment/hosts
+Application Provisioning:
+    stage: Application Provisioning
+    script:
+        - chmod +x AppScript/deployment/env.sh
+        - source AppScript/deployment/env.sh
+        - ansible-playbook -i AppScript/deployment/hosts AppScript/deployment/application.yml -vvv
+    when: manual
+    dependencies:
+      - OS Provisioning
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+Cleanup:
+    stage: Cleanup
+    script:
+        - sudo chmod +x BuildScript/7_Cleanup.sh
+        - source BuildScript/7_Cleanup.sh
+    dependencies: 
+        - Application Provisioning
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
